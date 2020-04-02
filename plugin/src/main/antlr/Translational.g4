@@ -40,15 +40,14 @@ conditionEquals
 : expression '==' expression
 ;
 conditionAny
-: 'any' '(' condition+ ')'
+: 'any' '(' (condition ','?)+ ')'
 ;
 conditionAll
-: 'all' '(' condition+ ')'
+: 'all' '(' (condition ','?)+ ')'
 ;
 
 expression
 : path
-| globalVariable
 | constantExpression
 | parameterExpression
 | elvisExpression
@@ -60,15 +59,11 @@ parenthesizedExpression
 ;
 
 elvisExpression
-: 'first' '(' expression+ ')'
+: 'first' '(' (expression ','?)+ ')'
 ;
 
 parameterExpression
 : '@' PathPart
-;
-
-globalVariable
-: '$' PathPart
 ;
 
 path
@@ -93,13 +88,13 @@ directive
 ;
 
 directiveBlock
-: '(' directive* ')'
+: '(' (directive ','?)* ')'
 ;
 directiveRepeat
 : directiveBlock '*'
 ;
 directiveIf
-: 'if' condition 'then' directive
+: 'if' condition 'then' directive ('else' directive)?
 ;
 directiveSet
 : expression '=' expression
@@ -111,6 +106,14 @@ String: '"' ('\\"' | ~'"')* '"';
 
 SPACE
     : [ \t\r\n] -> skip
+    ;
+
+COMMENT
+    :   '/*' .*? '*/' -> skip
+    ;
+
+LINE_COMMENT
+    :   '//' ~[\r\n]* -> skip
     ;
 
 /*

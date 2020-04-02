@@ -52,15 +52,11 @@ fun TranslationalParser.ConditionAllContext.convert(sourceLanguage: SourceLangua
 )
 fun TranslationalParser.ExpressionContext.convert(sourceLanguage: SourceLanguage): Expression = parameterExpression()?.convert(sourceLanguage)
     ?: path()?.convert(sourceLanguage)
-    ?: globalVariable()?.convert(sourceLanguage)
     ?: constantExpression()?.convert(sourceLanguage)
     ?: parenthesizedExpression()?.expression()?.convert(sourceLanguage)
     ?: elvisExpression()?.convert(sourceLanguage)
     ?: throw IllegalArgumentException()
 fun TranslationalParser.ParameterExpressionContext.convert(sourceLanguage: SourceLanguage): ParameterExpression = ParameterExpression(
-    this.PathPart().text
-)
-fun TranslationalParser.GlobalVariableContext.convert(sourceLanguage: SourceLanguage): GlobalVariable = GlobalVariable(
     this.PathPart().text
 )
 fun TranslationalParser.PathContext.convert(sourceLanguage: SourceLanguage): Expression {
@@ -113,7 +109,8 @@ fun TranslationalParser.DirectiveRepeatContext.convert(sourceLanguage: SourceLan
 )
 fun TranslationalParser.DirectiveIfContext.convert(sourceLanguage: SourceLanguage): DirectiveIf = DirectiveIf(
     this.condition().convert(sourceLanguage),
-    this.directive().convert(sourceLanguage)
+    this.directive(0).convert(sourceLanguage),
+    this.directive(1)?.convert(sourceLanguage)
 )
 fun TranslationalParser.DirectiveSetContext.convert(sourceLanguage: SourceLanguage): DirectiveSetVariable = DirectiveSetVariable(
     this.expression(0).convert(sourceLanguage) as SettableExpression,

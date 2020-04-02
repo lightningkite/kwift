@@ -28,7 +28,7 @@ data class ConditionEquals(val expression: Expression, val expression2: Expressi
 }
 
 data class ConditionAny(val conditions: List<Condition>) : Condition {
-    override val complexity: Int get() = conditions.sumBy { it.complexity }
+    override val complexity: Int get() = conditions.asSequence().map { it.complexity }.min() ?: 0
     override fun evaluate(
         translator: Translator,
         context: ParseTree

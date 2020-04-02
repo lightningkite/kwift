@@ -20,6 +20,7 @@ data class DirectiveEmit(val expression: Expression, val default: String? = null
         when(result) {
             is ParserRuleContext -> translator.convert(result, out)
             is TerminalNode -> translator.convert(result, out)
+            null -> return
             else -> out.append(result.toString())
         }
     }
@@ -44,10 +45,12 @@ data class DirectiveRepeat(val subDirective: Directive, val times: Int? = null) 
     }
 }
 
-data class DirectiveIf(val condition: Condition, val directive: Directive) : Directive {
+data class DirectiveIf(val condition: Condition, val directive: Directive, val elseDirective: Directive? = null) : Directive {
     override fun evaluate(translator: Translator, context: ParseTree, out: Appendable, offset: Int) {
         if(condition.evaluate(translator, context)) {
             directive.evaluate(translator, context, out, offset)
+        } else {
+            elseDirective?.evaluate(translator, context, out, offset)
         }
     }
 }

@@ -36,13 +36,20 @@ data class PropertyOnRule(
         context: ParseTree,
         offset: Int
     ): Any? {
+        if(on == null && property == "global") return translator.globals
         val ctx = if (on != null) on.resolve(translator, context, 0) else context
-        return if(ctx is ParseTree) {
-            when(property){
-                "text" -> ctx.text
-                else -> null
+        return when (ctx) {
+            is ParseTree -> {
+                when(property){
+                    "text" -> ctx.text
+                    else -> null
+                }
             }
-        } else null
+            is Map<*, *> -> {
+                ctx[property]
+            }
+            else -> null
+        }
     }
 
     override fun set(value: Any?, translator: Translator, context: ParseTree, offset: Int) {
