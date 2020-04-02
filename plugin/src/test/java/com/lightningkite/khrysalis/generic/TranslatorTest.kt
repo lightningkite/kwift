@@ -31,6 +31,18 @@ class TranslatorTest {
             }
         """.trimIndent()
         translator.convert(testFile.charStream().kotlin().kotlinFile(), System.out)
+
+        /*output looks like this:
+        package com . test
+        Not a kotlin import:
+        com/lightningkite/khrysalis/
+        Dude, that's a long import.
+        Caught your kotlin import
+        fun main ( ) {
+        println ( " Hello World! " )
+        println ( 1 + 2 )
+        }
+         */
     }
 
 }
