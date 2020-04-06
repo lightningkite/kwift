@@ -14,10 +14,45 @@ class TranslatorTest {
             when identifier.simpleIdentifier[5]
             do "Dude, that's a long import.\n"
     """.trimIndent()
+    val ruleSourceXml = """
+        TextView do
+            "<p style=\""
+            textColor
+            "\">"
+            text
+            "</p>"
+            ;
+        textColor do
+            "color: "
+            asColor
+            ";"
+        background
+            when 
+                asColor.colorSetResource
+            do () //we'll set this up later in CSS
+        background do
+            "background: "
+            asColor
+            ";"
+        asColor do
+            color
+            colorResource
+            colorSetResource
+        color do
+            "#" text
+        colorResource do
+            "#" rawColor
+        colorSetResource do
+            "#" setty
+            
+    """.trimIndent()
 
     @Test fun simpleTest(){
-        val translator = Translator.collect(SourceLanguage.kotlin, ruleSource.charStream().getRuleOptions(SourceLanguage.kotlin))
-        println(translator.rules[KotlinParser.RULE_importHeader])
+        val translator = Translator(SourceLanguage.kotlin)
+        translator.add(ruleSource.charStream())
+        for(item in translator.rules[KotlinParser.RULE_importHeader]){
+            println(item)
+        }
         val testFile = """
             package com.test
             

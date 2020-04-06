@@ -1,5 +1,6 @@
 package com.lightningkite.khrysalis.generic
 
+import com.lightningkite.khrysalis.utils.binaryInsertBy
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -9,10 +10,8 @@ import java.io.File
 
 fun File.charStream() = org.antlr.v4.runtime.ANTLRFileStream(this.path)
 fun String.charStream() = ANTLRInputStream(this)
-fun CharStream.getRuleOptions(sourceLanguage: SourceLanguage): Sequence<RuleOption> {
-    val file = TranslationalParser(CommonTokenStream(TranslationalLexer(this))).file()
-    val options = ArrayList<RuleOption>()
-    val macros = ArrayList<DirectiveMacroDefinition>()
+fun Translator.add(charStream: CharStream) {
+    val file = TranslationalParser(CommonTokenStream(TranslationalLexer(charStream))).file()
     file.fileEntry().asSequence()
         .forEach {
             it.parserRuleOption()?.let {
@@ -25,19 +24,29 @@ fun CharStream.getRuleOptions(sourceLanguage: SourceLanguage): Sequence<RuleOpti
                         ConditionAll(it.map { it.convert(sourceLanguage) })
                     }
                 }
-                options += RuleOption(
-                    type = type,
-                    ruleIndex = index,
-                    condition = condition,
-                    priority = it.Index()?.text?.toInt() ?: condition?.complexity ?: 0,
-                    directives = it.directive().map { it.convert(sourceLanguage) }
-                )
+                when (type) {
+                    Path.Type.Token -> this.tokens[index].binaryInsertBy(RuleOption(
+                        type = type,
+                        ruleIndex = index,
+                        condition = condition,
+                        priority = it.Index()?.text?.toInt() ?: condition?.complexity ?: 0,
+                        directives = it.directive().map { it.convert(sourceLanguage) }
+                    )) { -it.priority }
+                    Path.Type.Rule -> this.rules[index].binaryInsertBy(RuleOption(
+                        type = type,
+                        ruleIndex = index,
+                        condition = condition,
+                        priority = it.Index()?.text?.toInt() ?: condition?.complexity ?: 0,
+                        directives = it.directive().map { it.convert(sourceLanguage) }
+                    )) { -it.priority }
+                    Path.Type.Parent -> TODO()
+                    Path.Type.Other -> TODO()
+                }
             }
             it.directiveMacroDefinition()?.let {
-
+                this.directiveMacros[it.name.text] = it.directive().convert(sourceLanguage)
             }
         }
-    return options.asSequence()
 }
 
 fun TranslationalParser.ConditionContext.convert(sourceLanguage: SourceLanguage): Condition =
@@ -83,28 +92,26 @@ fun TranslationalParser.PathContext.convert(sourceLanguage: SourceLanguage): Exp
     val parts = this.pathSection()
     val text = parts[0].PathPart().text
     val data = sourceLanguage.getData[text]
-    var current: Expression = if (data != null)
-        Path(
-            name = text,
-            type = data.type,
-            ruleIndex = data.index,
-            index = parts[0].Index()?.toString()?.toInt() ?: 0,
-            on = null
-        ) else PropertyOnRule(property = text)
+    var current: Expression = Path(
+        name = text,
+        type = data?.type ?: Path.Type.Other,
+        ruleIndex = data?.index ?: -1,
+        index = parts[0].Index()?.toString()?.toInt() ?: 0,
+        on = null
+    )
 
     var index = 0
     parts.subList(1, parts.size).forEach { part ->
         index++
         @Suppress("NAME_SHADOWING") val text = part.PathPart().text
         @Suppress("NAME_SHADOWING") val data = sourceLanguage.getData[text]
-        current = if (data != null)
-            Path(
-                name = text,
-                type = data.type,
-                ruleIndex = data.index,
-                index = part.Index()?.toString()?.toInt() ?: 0,
-                on = current
-            ) else PropertyOnRule(property = text, on = current)
+        current = Path(
+            name = text,
+            type = data?.type ?: Path.Type.Other,
+            ruleIndex = data?.index ?: -1,
+            index = part.Index()?.toString()?.toInt() ?: 0,
+            on = current
+        )
     }
 
     return current
@@ -126,7 +133,15 @@ fun TranslationalParser.DirectiveContext.convert(sourceLanguage: SourceLanguage)
         ?: this.directiveIf()?.convert(sourceLanguage)
         ?: this.directiveRepeat()?.convert(sourceLanguage)
         ?: this.directiveLoop()?.convert(sourceLanguage)
+        ?: this.directiveMacro()?.convert(sourceLanguage)
+        ?: this.DirectivePass()?.let { DirectivePass }
         ?: throw IllegalArgumentException()
+
+fun TranslationalParser.DirectiveMacroContext.convert(sourceLanguage: SourceLanguage): DirectiveMacro = DirectiveMacro(
+    name = this.PathPart().text,
+    arguments = this.parameterExpression().zip(this.expression()).associate { it.first.PathPart().text to it.second.convert(sourceLanguage) }
+)
+
 
 fun TranslationalParser.DirectiveBlockContext.convert(sourceLanguage: SourceLanguage): DirectiveBlock = DirectiveBlock(
     directive().map { it.convert(sourceLanguage) }

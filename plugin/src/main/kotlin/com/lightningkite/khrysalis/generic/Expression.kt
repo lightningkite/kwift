@@ -8,109 +8,97 @@ import org.antlr.v4.runtime.tree.TerminalNode
 
 
 interface Expression {
-    fun resolve(translator: Translator, context: ParseTree, offset: Int = 0): Any?
+    fun resolve(translator: Translator, context: Any?, offset: Int = 0): Any?
     fun count(
         translator: Translator,
-        context: ParseTree
+        context: Any?
     ): Int = Int.MAX_VALUE
 }
 
 interface SettableExpression : Expression {
-    fun set(value: Any?, translator: Translator, context: ParseTree, offset: Int = 0)
+    fun set(value: Any?, translator: Translator, context: Any?, offset: Int = 0)
 }
 
 data class ConstantExpression(val value: Any?) : Expression {
     override fun resolve(
         translator: Translator,
-        context: ParseTree,
+        context: Any?,
         offset: Int
     ): Any? = value
+
+    override fun toString(): String = if (value is String) "\"$value\"" else value.toString()
 }
 
-data class PropertyOnRule(
-    val on: Expression? = null,
-    val property: String
-) : SettableExpression {
-    override fun resolve(
-        translator: Translator,
-        context: ParseTree,
-        offset: Int
-    ): Any? {
-        if(on == null && property == "global") return translator.globals
-        val ctx = if (on != null) on.resolve(translator, context, 0) else context
-        return when (ctx) {
-            is ParseTree -> {
-                when(property){
-                    "text" -> ctx.text
-                    else -> null
-                }
-            }
-            is Map<*, *> -> {
-                ctx[property]
-            }
-            else -> null
-        }
-    }
-
-    override fun set(value: Any?, translator: Translator, context: ParseTree, offset: Int) {
-        val ctx = if (on != null) on.resolve(translator, context, 0) else context
-        TODO()
-    }
-
-    override fun toString(): String {
-        return (if (on != null) "$on->" else "") + property
-    }
-}
-
-data class ParameterExpression(val key: String): Expression {
-    override fun resolve(translator: Translator, context: ParseTree, offset: Int): Any? {
+data class ParameterExpression(val key: String) : Expression {
+    override fun resolve(translator: Translator, context: Any?, offset: Int): Any? {
         return translator.parameters[key]
     }
-}
 
-data class GlobalVariable(
-    val property: String
-) : SettableExpression {
-    override fun resolve(translator: Translator, context: ParseTree, offset: Int): Any? {
-        return translator.globals[property]
-    }
-
-    override fun set(value: Any?, translator: Translator, context: ParseTree, offset: Int) {
-        translator.globals[property] = value
-    }
+    override fun toString(): String = "@$key"
 }
 
 data class Path(
     val name: String,
     val type: Type,
-    val ruleIndex: Int = 0,
+    val ruleIndex: Int = -1,
     val index: Int = 0,
     val on: Expression? = null
 ) : Expression {
-    enum class Type { Token, Rule, Parent }
+    enum class Type { Token, Rule, Parent, Other }
 
     override fun resolve(
         translator: Translator,
-        context: ParseTree,
+        context: Any?,
         offset: Int
-    ): ParseTree? {
-        val target = if(on != null) on.resolve(translator, context, 0) else context
-        return when(type) {
-            Type.Token -> if(target !is ParserRuleContext ) null else target.children.asSequence().mapNotNull { it as? TerminalNode }.filter { it.symbol.type == -this.ruleIndex }.drop(index + offset).firstOrNull()
-            Type.Parent -> context.parent
-            Type.Rule -> if(target !is ParserRuleContext ) null else target.children.asSequence().mapNotNull { it as? ParserRuleContext }.filter { it.ruleIndex == this.ruleIndex }.drop(index + offset).firstOrNull()
+    ): Any? {
+        if (on == null && name == "global") return translator.globals
+        val target = if (on != null) on.resolve(translator, context, 0) else context
+        val result = when (target) {
+            is ParserRuleContext -> {
+                return when (type) {
+                    Type.Token -> target.children.asSequence().mapNotNull { it as? TerminalNode }
+                        .filter { it.symbol.type == -this.ruleIndex }.drop(index + offset).firstOrNull()
+                    Type.Parent -> target.parent
+                    Type.Rule -> target.children.asSequence().mapNotNull { it as? ParserRuleContext }
+                        .filter { it.ruleIndex == this.ruleIndex }.drop(index + offset).firstOrNull()
+                    Type.Other -> when (name) {
+                        "text" -> target.text
+                        else -> null
+                    }
+                }
+            }
+            is VirtualRule -> {
+                target[name]
+            }
+            is Map<*, *> -> {
+                target[name]
+            }
+            else -> null
         }
+        return if (result is List<*>)
+            result[index]
+        else result
     }
 
     override fun count(
         translator: Translator,
-        context: ParseTree
+        context: Any?
     ): Int {
-        val target = if(on != null) on.resolve(translator, context, 0) else context
-        return when(type) {
-            Type.Token -> if(target !is ParserRuleContext ) 0 else target.children.asSequence().mapNotNull { it as? TerminalNode }.filter { it.symbol.type == -this.ruleIndex }.count() - index
-            Type.Parent -> 1
-            Type.Rule -> if(target !is ParserRuleContext ) 0 else target.children.asSequence().mapNotNull { it as? ParserRuleContext }.filter { it.ruleIndex == this.ruleIndex }.count() - index
+        val target = if (on != null) on.resolve(translator, context, 0) else context
+        return when (target) {
+            is ParserRuleContext -> when (type) {
+                Type.Token -> target.children.asSequence()
+                    .mapNotNull { it as? TerminalNode }.filter { it.symbol.type == -this.ruleIndex }.count() - index
+                Type.Parent -> 1
+                Type.Rule -> target.children.asSequence()
+                    .mapNotNull { it as? ParserRuleContext }.filter { it.ruleIndex == this.ruleIndex }
+                    .count() - index
+                Type.Other -> when (name) {
+                    "text" -> 1
+                    else -> 0
+                }
+            }
+            else -> resolve(translator, context, index).let { if (it is List<*>) it.size else if (it != null) 1 else 0 }
         }
     }
 
@@ -121,8 +109,10 @@ data class Path(
 
 data class ElvisExpression(
     val options: List<Expression>
-): Expression {
-    override fun resolve(translator: Translator, context: ParseTree, offset: Int): Any? {
+) : Expression {
+    override fun resolve(translator: Translator, context: Any?, offset: Int): Any? {
         return options.asSequence().mapNotNull { it.resolve(translator, context, offset) }.firstOrNull()
     }
+
+    override fun toString(): String = "first(" + options.joinToString() + ")"
 }

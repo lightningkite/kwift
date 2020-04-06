@@ -17,7 +17,7 @@ fileEntry
 ;
 
 directiveMacroDefinition
-: '#' name=PathPart '->' parserRuleOption
+: '#' name=PathPart 'do' directive
 ;
 
 parserRuleMacroUsage
@@ -29,7 +29,7 @@ parserRuleMacro
 ;
 
 parserRuleOption
-: PathPart ('when' condition+)? ('priority' Index)? '->' directive+
+: PathPart ('when' condition+)? ('priority' Index)? 'do' directive+
 ;
 
 condition
