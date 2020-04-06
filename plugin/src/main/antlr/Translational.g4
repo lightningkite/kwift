@@ -13,18 +13,23 @@ fileEntry
 : parserRuleOption
 | parserRuleMacro
 | parserRuleMacroUsage
+| directiveMacroDefinition
+;
+
+directiveMacroDefinition
+: '#' name=PathPart '->' parserRuleOption
 ;
 
 parserRuleMacroUsage
-: PathPart '(' (expression ','?)* ')'
+: PathPart '(' (parameterExpression '=' expression ','?)* ')'
 ;
 
 parserRuleMacro
-: 'macro' name=PathPart '(' ('@' arg=PathPart ','?)* ')' 'on' parserRuleOption
+: 'rulemacro' name=PathPart 'on' parserRuleOption
 ;
 
 parserRuleOption
-: PathPart ('when' condition+)? ('priority' Index)? 'do' directive+
+: PathPart ('when' condition+)? ('priority' Index)? '->' directive+
 ;
 
 condition
@@ -83,15 +88,23 @@ directive
 : expression
 | directiveBlock
 | directiveRepeat
+| directiveLoop
 | directiveIf
 | directiveSet
+| directiveMacro
+| DirectivePass
 ;
-
+directiveMacro
+: '#' PathPart '(' (parameterExpression '=' expression ','?)* ')'
+;
 directiveBlock
 : '(' (directive ','?)* ')'
 ;
 directiveRepeat
-: directiveBlock '*'
+: directiveBlock '*' (expression)?
+;
+directiveLoop
+: 'for' parameterExpression 'in' expression 'do' directive
 ;
 directiveIf
 : 'if' condition 'then' directive ('else' directive)?
@@ -103,6 +116,7 @@ directiveSet
 PathPart: [a-zA-Z]+;
 Index: [0-9]+;
 String: '"' ('\\"' | ~'"')* '"';
+DirectivePass: 'continue';
 
 SPACE
     : [ \t\r\n] -> skip

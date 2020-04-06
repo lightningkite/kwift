@@ -45,6 +45,16 @@ data class DirectiveRepeat(val subDirective: Directive, val times: Int? = null) 
     }
 }
 
+data class DirectiveLoop(val paramName: String, val countExpression: Expression, val subDirective: Directive) : Directive {
+    override fun evaluate(translator: Translator, context: ParseTree, out: Appendable, offset: Int) {
+        repeat(countExpression.count(translator, context)) { offsetC ->
+            translator.parameters[paramName] = offsetC
+            subDirective.evaluate(translator, context, out)
+        }
+        translator.parameters[paramName] = null
+    }
+}
+
 data class DirectiveIf(val condition: Condition, val directive: Directive, val elseDirective: Directive? = null) : Directive {
     override fun evaluate(translator: Translator, context: ParseTree, out: Appendable, offset: Int) {
         if(condition.evaluate(translator, context)) {
@@ -60,3 +70,19 @@ data class DirectiveSetVariable(val property: SettableExpression, val value: Exp
         property.set(value.resolve(translator, context, offset), translator, context, offset)
     }
 }
+
+data class DirectiveMacro(val name: String, val arguments: Map<String, Expression>): Directive {
+    override fun evaluate(translator: Translator, context: ParseTree, out: Appendable, offset: Int) {
+        val macro = translator.directiveMacros[name]!!
+        val previousValues = arguments.keys.associate { it to translator.parameters[it] }
+        for((key, value) in arguments){
+            translator.parameters[key] = value
+        }
+        macro.directive.evaluate(translator, context, out, offset)
+        for((key, value) in previousValues){
+            translator.parameters[key] = value
+        }
+    }
+}
+
+data class DirectiveMacroDefinition(val name: String, val directive: Directive)

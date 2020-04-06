@@ -64,7 +64,7 @@ data class PropertyOnRule(
 
 data class ParameterExpression(val key: String): Expression {
     override fun resolve(translator: Translator, context: ParseTree, offset: Int): Any? {
-        TODO("Not yet implemented")
+        return translator.parameters[key]
     }
 }
 

@@ -12,6 +12,8 @@ class Translator(
     val tokens: Array<out List<RuleOption>>
 ) {
     val globals: HashMap<String, Any?> = HashMap()
+    val directiveMacros: HashMap<String, DirectiveMacroDefinition> = HashMap()
+    val parameters: HashMap<String, Any?> = HashMap()
 
     companion object {
         fun collect(sourceLanguage: SourceLanguage, sequence: Sequence<RuleOption>): Translator {
@@ -66,3 +68,8 @@ data class RuleOption(
         }
     }
 }
+
+data class VirtualRule(
+    val rule: String,
+    val parts: Map<String, String>
+)
