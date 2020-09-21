@@ -341,9 +341,9 @@ open class MonthCVD: CustomViewDelegate {
         let dragStartY: Float = Float(0)
         self.dragStartY = dragStartY
         super.init()
-        self.currentMonthObs.subscribeBy { [weak self] (value) in 
+        self.currentMonthObs.subscribeBy(onNext:   { [weak self] (value) in 
             self?.postInvalidate()
-        }.forever()
+        }).forever()
         self.labelPaint.isAntiAlias = true
         self.labelPaint.style = Paint.Style.FILL
         self.labelPaint.color = 0xFF808080.asColor()

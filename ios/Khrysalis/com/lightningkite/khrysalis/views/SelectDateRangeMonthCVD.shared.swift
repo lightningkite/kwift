@@ -150,9 +150,9 @@ open class SelectDateRangeMonthCVD: MonthCVD {
         self.start.onChange.subscribeBy { [weak self] (value) in 
             self?.invalidate()
         }.forever()
-        self.endInclusive.subscribeBy { [weak self] (value) in 
+        self.endInclusive.subscribeBy ({_ in}, {}, { [weak self] (value) in 
             self?.invalidate()
-        }.forever()
+        }).forever()
     }
 }
  

@@ -20,16 +20,16 @@ public extension ToggleButton{
  */
     
 func bindOnString(observable: ObservableProperty<String>) {
-    observable.subscribeBy{ (value) in
+    observable.subscribeBy({_ in}, {}, { (value) in
         self.textOn = value
         self.syncText()
-    }.until(self.removed)
+    }).until(self.removed)
 }
 func bindOnString(_ observable: ObservableProperty<String>) {
-    observable.subscribeBy{ (value) in
+    observable.subscribeBy({_ in}, {}, { (value) in
         self.textOn = value
         self.syncText()
-    }.until(self.removed)
+    }).until(self.removed)
 }
 
 /**
@@ -43,16 +43,16 @@ func bindOnString(_ observable: ObservableProperty<String>) {
  */
 
 func bindOffString(observable: ObservableProperty<String>) {
-    observable.subscribeBy{ (value) in
+    observable.subscribeBy({_ in}, {}, { (value) in
         self.textOff = value
         self.syncText()
-    }.until(self.removed)
+    }).until(self.removed)
 }
 func bindOffString( _ observable: ObservableProperty<String>) {
-    observable.subscribeBy{ (value) in
+    observable.subscribeBy({_ in}, {}, { (value) in
         self.textOff = value
         self.syncText()
-    }.until(self.removed)
+    }).until(self.removed)
 }
 
 /**
@@ -66,19 +66,19 @@ func bindOffString( _ observable: ObservableProperty<String>) {
  */
 
 func bindOnOffString(observable: ObservableProperty<String>) {
-    observable.subscribeBy{ (value) in
+    observable.subscribeBy({_ in}, {}, { (value) in
         self.textOn = value
         self.textOff = value
         self.syncText()
-    }.until(self.removed)
+    }).until(self.removed)
 }
 
     func bindOnOffString(_ observable: ObservableProperty<String>) {
-        observable.subscribeBy{ (value) in
+        observable.subscribeBy({_ in}, {}, { (value) in
             self.textOn = value
             self.textOff = value
             self.syncText()
-        }.until(self.removed)
+        }).until(self.removed)
     }
 
 }

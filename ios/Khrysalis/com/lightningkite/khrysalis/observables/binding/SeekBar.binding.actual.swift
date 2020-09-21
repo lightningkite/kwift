@@ -15,12 +15,12 @@ public extension UISlider {
             observable.value = Int32(self.value.rounded())
             suppress = false
         })
-        observable.subscribeBy { (value) in
+        observable.subscribeBy({_ in}, {}, { (value) in
             guard !suppress else { return }
             suppress = true
             self.setValue(Float(value), animated: false)
             suppress = false
-        }.until(self.removed)
+        }).until(self.removed)
     }
     func bind(start: Int32, endInclusive: Int32, observable: MutableObservableProperty<Int32>) -> Void {
         return bind(start, endInclusive, observable)

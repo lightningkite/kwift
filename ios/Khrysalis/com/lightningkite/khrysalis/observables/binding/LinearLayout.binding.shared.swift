@@ -29,7 +29,7 @@ private class LinearLayoutBoundSubview<T> {
 extension LinearLayout {
     public func bind<T>(data: ObservableProperty<Array<T>>, defaultValue: T, makeView: @escaping (ObservableProperty<T>) -> View) -> Void {
         var existingViews: Array<LinearLayoutBoundSubview<T>> = Array()
-        data.subscribeBy{ (value) in 
+        data.subscribeBy(onNext:  { (value) in 
             var excessViews = existingViews.size - value.size
             if excessViews > 0 {
                 
@@ -50,7 +50,7 @@ extension LinearLayout {
             for index in value.indices {
                 existingViews[ index ].property.value = value[ index ]
             }
-        }.until(self.removed)
+        }).until(self.removed)
     }
     public func bind<T>(_ data: ObservableProperty<Array<T>>, _ defaultValue: T, _ makeView: @escaping (ObservableProperty<T>) -> View) -> Void {
         return bind(data: data, defaultValue: defaultValue, makeView: makeView)

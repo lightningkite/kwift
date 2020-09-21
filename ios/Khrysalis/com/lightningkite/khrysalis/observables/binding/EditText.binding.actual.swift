@@ -7,12 +7,12 @@ import UIKit
 public extension UITextField {
     func bindString(_ observable: MutableObservableProperty<String>) -> Void {
         delegate = DoneDelegate.shared
-        observable.subscribeBy { ( value) in
+        observable.subscribeBy({_ in}, {},  { ( value) in
             if self.textString != value {
                 self.textString = value
             }
             self.notifyParentSizeChanged()
-        }.until(self.removed)
+        }).until(self.removed)
         addAction(for: UITextField.Event.editingChanged) { [weak self] in
             if observable.value != self?.textString {
                 observable.value = self?.textString ?? ""
@@ -37,12 +37,12 @@ public extension UITextView {
         }
     }
     func bindString(_ observable: MutableObservableProperty<String>) -> Void {
-        observable.subscribeBy { ( value) in
+        observable.subscribeBy({_ in}, {},  { ( value) in
             if self.textString != value {
                 self.textString = value
             }
             self.notifyParentSizeChanged()
-        }.until(self.removed)
+        }).until(self.removed)
         let delegate = LambdaDelegate { text in
             if observable.value != text {
                 observable.value = text
@@ -60,13 +60,13 @@ public extension UITextView {
 public extension UITextField {
     func bindInteger(_ observable: MutableObservableProperty<Int32>) -> Void {
         delegate = DoneDelegate.shared
-        observable.subscribeBy { ( value) in
+        observable.subscribeBy({_ in}, {},  { ( value) in
             let currentValue = Int(self.textString) ?? 0
             if currentValue != Int(value) {
                 self.textString = value.toString()
                 self.notifyParentSizeChanged()
             }
-        }.until(self.removed)
+        }).until(self.removed)
         addAction(for: UITextField.Event.editingChanged) { [weak self] in
             if let self = self {
                 let currentValue = Int(self.textString) ?? 0
@@ -85,13 +85,13 @@ public extension UITextField {
 public extension UITextField {
     func bindDouble(_ observable: MutableObservableProperty<Double>) -> Void {
         delegate = DoneDelegate.shared
-        observable.subscribeBy { ( value) in
+        observable.subscribeBy({_ in}, {},  { ( value) in
             let currentValue = Double(self.textString) ?? 0
             if currentValue != Double(value) {
                 self.textString = value.toString()
                 self.notifyParentSizeChanged()
             }
-        }.until(self.removed)
+        }).until(self.removed)
         addAction(for: UITextField.Event.editingChanged) { [weak self] in
             if let self = self {
                 let currentValue = Double(self.textString) ?? 0

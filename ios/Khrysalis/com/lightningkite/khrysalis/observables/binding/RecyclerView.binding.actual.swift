@@ -47,14 +47,14 @@ public extension UITableView {
         self.rowHeight = UITableView.automaticDimension
 
         var previouslyEmpty = data.value.isEmpty
-        data.subscribeBy { value in
+        data.subscribeBy(onNext:   { value in
             let emptyNow = data.value.isEmpty
             self.reloadData()
             if previouslyEmpty && !emptyNow {
                 self.scrollToRow(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             }
             previouslyEmpty = emptyNow
-        }.until(self.removed)
+        }).until(self.removed)
 
         self.tableFooterView = UIView(frame: .zero)
     }
@@ -181,14 +181,14 @@ public extension UITableView {
         self.rowHeight = UITableView.automaticDimension
 
         var previouslyEmpty = data.value.isEmpty
-        data.subscribeBy { value in
+        data.subscribeBy(onNext:   { value in
             let emptyNow = data.value.isEmpty
             self.reloadData()
             if previouslyEmpty && !emptyNow {
                 self.scrollToRow(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             }
             previouslyEmpty = emptyNow
-        }.until(self.removed)
+        }).until(self.removed)
         self.tableFooterView = UIView(frame: .zero)
     }
     func bindMulti(viewDependency: ViewDependency, data: ObservableProperty<Array<Any>>, typeHandlerSetup: (RVTypeHandler) -> Void) -> Void {
@@ -207,14 +207,14 @@ public extension UITableView {
         self.rowHeight = UITableView.automaticDimension
 
         var previouslyEmpty = data.value.isEmpty
-        data.subscribeBy { value in
+        data.subscribeBy(onNext:   { value in
             let emptyNow = data.value.isEmpty
             self.reloadData()
             if previouslyEmpty && !emptyNow {
                 self.scrollToRow(at: IndexPath(item: 0, section: 0), at: .top, animated: true)
             }
             previouslyEmpty = emptyNow
-        }.until(self.removed)
+        }).until(self.removed)
         self.tableFooterView = UIView(frame: .zero)
     }
     func bindMulti<T>(data: ObservableProperty<Array<T>>, defaultValue: T, determineType: @escaping (T) -> Int32, makeView: @escaping (Int32, ObservableProperty<T>) -> View) -> Void {
@@ -232,13 +232,13 @@ public extension UITableView {
         } else {
             addSubview(control)
         }
-        loading.subscribeBy { (value) in
+        loading.subscribeBy(onNext:   { (value) in
             if value {
                 control.beginRefreshing()
             } else {
                 control.endRefreshing()
             }
-        }.until(control.removed)
+        }).until(control.removed)
     }
     func bindRefresh(loading: ObservableProperty<Bool>, refresh: @escaping () -> Void) -> Void {
         return bindRefresh(loading, refresh)

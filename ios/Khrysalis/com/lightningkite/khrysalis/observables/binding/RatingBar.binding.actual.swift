@@ -9,12 +9,12 @@ public extension UIRatingBar {
         self.settings.fillMode = .full
 
         var suppress = false
-        observable.subscribeBy { (value) in
+        observable.subscribeBy(onNext:   { (value) in
             guard !suppress else { return }
             suppress = true
             self.rating = Double(value)
             suppress = false
-        }.until(self.removed)
+        }).until(self.removed)
         self.didTouchCosmos = { rating in
             guard !suppress else { return }
             suppress = true
@@ -49,12 +49,12 @@ public extension UIRatingBar {
         self.settings.fillMode = .precise
 
         var suppress = false
-        observable.subscribeBy { (value) in
+        observable.subscribeBy(onNext:   { (value) in
             guard !suppress else { return }
             suppress = true
             self.rating = Double(value)
             suppress = false
-        }.until(self.removed)
+        }).until(self.removed)
         self.didTouchCosmos = { rating in
             guard !suppress else { return }
             suppress = true

@@ -83,10 +83,10 @@ open class AbstractCalendarView : LinearLayout {
                 view.textColor = headerColorSet.foreground
                 view.font = UIFont.get(size: headerFont, style: [])
                 view.textAlignment = .center
-                currentPage.subscribeBy{ value in
+                currentPage.subscribeBy(onNext:  { value in
                     let month = AbstractCalendarView.monthFromPosition(value)
                     view.text = Calendar.current.monthSymbols[Int(month.monthOfYear - 1)] + " " + month.yearAd.toString()
-                }.until(view.removed)
+                }).until(view.removed)
             }
             view.addSubview(UIButton()) { view in
                 view.setTitleColor(headerColorSet.foreground, for: .normal)

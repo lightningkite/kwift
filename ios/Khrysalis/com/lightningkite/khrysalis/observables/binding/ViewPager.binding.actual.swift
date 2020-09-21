@@ -52,13 +52,13 @@ public extension UICollectionView {
         } else {
             addSubview(control)
         }
-        loading.subscribeBy { (value) in
+        loading.subscribeBy (onNext:  { (value) in
             if value {
                 control.beginRefreshing()
             } else {
                 control.endRefreshing()
             }
-        }.until(control.removed)
+        }).until(control.removed)
     }
 
     var currentIndex: Int? {
@@ -67,10 +67,10 @@ public extension UICollectionView {
 
     func bindIndex(_ index: MutableObservableProperty<Int32>){
         var suppress = false
-        index.subscribeBy { value in
+        index.subscribeBy(onNext:   { value in
             guard !suppress else { return }
             self.scrollToItem(at: IndexPath(row: Int(value), section: 0), at: .centeredHorizontally, animated: true)
-        }.until(self.removed)
+        }).until(self.removed)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
             self.scrollToItem(at: IndexPath(row: Int(index.value), section: 0), at: .centeredHorizontally, animated: false)
         })
@@ -108,7 +108,7 @@ public extension UICollectionView {
         retain(as: "boundDataSource", item: boundDataSource, until: removed)
 
         var previouslyEmpty = data.value.isEmpty
-        data.subscribeBy { value in
+        data.subscribeBy(onNext:   { value in
             let emptyNow = data.value.isEmpty
             self.reloadData()
             if previouslyEmpty && !emptyNow {
@@ -124,7 +124,7 @@ public extension UICollectionView {
                 self.scrollToItem(at: IndexPath(item: 0, section: 0), at: at, animated: true)
             }
             previouslyEmpty = emptyNow
-        }.until(self.removed)
+        }).until(self.removed)
     }
 
     func bind(
