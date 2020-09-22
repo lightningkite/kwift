@@ -1,22 +1,16 @@
 buildscript {
-    ext.kotlinVersion = '1.3.71'
     repositories {
-
-        maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
-        maven { url "http://dl.bintray.com/kotlin/kotlin-dev" }
         jcenter()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+'
     }
 }
 
-apply plugin: "java"
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
 apply plugin: 'java-gradle-plugin'
-apply plugin: "kotlin"
-apply plugin: 'antlr'
-apply plugin: "idea"
 apply plugin: 'application'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
@@ -30,7 +24,7 @@ bintray {
         name = project.name
         userOrg = "lightningkite"
         licenses = ["MIT"]
-        def github = "https://github.com/lightningkite/mirror-kotlin"
+        def github = "https://github.com/lightningkite/khrysalis"
         vcsUrl = github
         websiteUrl = github
         issueTrackerUrl = github + "/issues"
@@ -43,7 +37,7 @@ bintray {
 
 gradlePlugin {
     plugins {
-        mirrorPlugin {
+        khrysalisPlugin {
             id = "com.lightningkite.khrysalis"
             implementationClass = "com.lightningkite.khrysalis.gradle.KhrysalisPlugin"
         }
@@ -57,7 +51,6 @@ repositories {
     jcenter()
     mavenCentral()
     google()
-
 }
 
 group = "com.lightningkite.khrysalis"
@@ -68,12 +61,9 @@ dependencies {
     api gradleApi()
     api "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable"
-    api group: 'org.antlr', name: 'antlr4-runtime', version: '4.5'
-//    api "org.jetbrains.kotlin:kotlin-gradle-plugin:${rootProject.kotlinVersion}"
-    antlr "org.antlr:antlr4:4.5.3" // use ANTLR version 4
+
     // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java
     api "org.apache.commons:commons-lang3:3.10"
-    api "me.eugeniomarletti.kotlin.metadata:kotlin-metadata:1.4.0"
     api "com.fasterxml.jackson.core:jackson-databind:2.9.+"
     api "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+"
     api "net.jodah:xsylum:0.1.0"
@@ -91,15 +81,9 @@ dependencies {
     testApi "org.eclipse.aether:aether-transport-http:$aetherVersion"
     testApi "org.apache.maven:maven-aether-provider:$mavenVersion"
 
-    api group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: kotlinVersion
-    api group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin-api', version: kotlinVersion
+    api group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin', version: '1.4.10'
+    api group: 'org.jetbrains.kotlin', name: 'kotlin-gradle-plugin-api', version: '1.4.10'
 }
-
-generateGrammarSource {
-    outputDirectory = new File("${project.buildDir}/generated-src/antlr/main/org/jetbrains/kotlin".toString())
-}
-
-compileKotlin.dependsOn generateGrammarSource
 
 task insertTypescriptJar(type: Copy){
     dependsOn(":kotlin-compiler-plugin-typescript:shadowJar")

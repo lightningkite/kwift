@@ -35,7 +35,7 @@ class CodeConversionTest {
         if (!standardLibraryCopy.exists()) {
             println("Downloading standard library...")
             standardLibraryCopy.outputStream().use { out ->
-                URL("https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.3.72/kotlin-stdlib-1.3.72.jar").openStream()
+                URL("https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/1.4.10/kotlin-stdlib-1.4.10.jar").openStream()
                     .use { input ->
                         input.copyTo(out)
                     }

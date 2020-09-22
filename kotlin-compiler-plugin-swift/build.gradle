@@ -1,19 +1,16 @@
 buildscript {
-    ext.kotlinVersion = '1.3.72'
     repositories {
-
-        maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
-        maven { url "http://dl.bintray.com/kotlin/kotlin-dev" }
         jcenter()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+'
         classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
     }
 }
 
-apply plugin: "kotlin"
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.github.johnrengelman.shadow'
