@@ -17,11 +17,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.databind.util.StdDateFormat
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.lightningkite.khrysalis.Image
-import com.lightningkite.khrysalis.PlatformSpecific
+import com.lightningkite.khrysalis.*
 import com.lightningkite.khrysalis.bytes.Data
-import com.lightningkite.khrysalis.escaping
-import com.lightningkite.khrysalis.loadImage
+import com.lightningkite.khrysalis.rx.forever
 import com.lightningkite.khrysalis.time.TimeAlone
 import com.lightningkite.khrysalis.time.DateAlone
 import com.lightningkite.khrysalis.time.iso8601
@@ -29,6 +27,7 @@ import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import okhttp3.*
 import java.io.ByteArrayOutputStream
@@ -39,33 +38,35 @@ import java.util.*
 object HttpClient {
 
     private var _appContext: Context? = null
+
     @PlatformSpecific
     var appContext: Context
         get() = _appContext!!
-        set(value){
+        set(value) {
             _appContext = value
-            ioScheduler =  Schedulers.io()
-            responseScheduler =  AndroidSchedulers.mainThread()
+            ioScheduler = Schedulers.io()
+            responseScheduler = AndroidSchedulers.mainThread()
         }
 
     var ioScheduler: Scheduler? = null
     var responseScheduler: Scheduler? = null
     fun <T> Single<T>.threadCorrectly(): Single<T> {
         var current = this
-        if(ioScheduler != null){
+        if (ioScheduler != null) {
             current = current.subscribeOn(ioScheduler)
         }
-        if(responseScheduler != null){
+        if (responseScheduler != null) {
             current = current.observeOn(responseScheduler)
         }
         return current
     }
+
     fun <T> Observable<T>.threadCorrectly(): Observable<T> {
         var current = this
-        if(ioScheduler != null){
+        if (ioScheduler != null) {
             current = current.subscribeOn(ioScheduler)
         }
-        if(responseScheduler != null){
+        if (responseScheduler != null) {
             current = current.observeOn(responseScheduler)
         }
         return current
@@ -79,6 +80,7 @@ object HttpClient {
 
     @PlatformSpecific
     val client = OkHttpClient.Builder().build()
+
     @PlatformSpecific
     val mapper = ObjectMapper()
         .registerModule(KotlinModule())
@@ -149,7 +151,7 @@ object HttpClient {
                 val response = client.newCall(request).execute()
                 println("Response from $method request to $url with headers $headers: ${response.code()}")
                 emitter.onSuccess(response)
-            } catch(e:Exception) {
+            } catch (e: Exception) {
                 emitter.onError(e)
             }
         }.threadCorrectly()
@@ -176,14 +178,8 @@ object HttpClient {
     }
 
 
-
-
-
-
     //YONDER LIES OLD CODE
     //Don't use these anymore.  Rx is better.
-
-
 
 
     var immediateMode = false
@@ -363,72 +359,72 @@ object HttpClient {
         additionalFields: Map<String, String> = mapOf(),
         crossinline onResult: @escaping() (code: Int, error: String?) -> Unit
     ) {
-        loadImage(image) { rawImage ->
-            if (rawImage == null) {
+        image.load().subscribeBy(
+            onError = {
                 onResult(0, "Failed to read image.")
-                return@loadImage
-            }
-            var qualityToTry = 100
-            var data = ByteArrayOutputStream().use {
-                rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
-                it.toByteArray()
-            }
-            while (data.size > maxSize) {
-                qualityToTry -= 5
-                data = ByteArrayOutputStream().use {
+            },
+            onSuccess = { rawImage ->
+                var qualityToTry = 100
+                var data = ByteArrayOutputStream().use {
                     rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
                     it.toByteArray()
                 }
-            }
-            Log.i(
-                "HttpClient",
-                "Sending $method request to $url with headers $headers and image at quality level $qualityToTry"
-            )
-            val request = Request.Builder()
-                .url(url)
-                .method(
-                    method,
-                    MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart(
-                            fieldName,
-                            "image.jpg",
-                            RequestBody.create(MediaType.parse("image/jpeg"), data)
-                        )
-                        .let { it ->
-                            var result = it
-                            for ((key, value) in additionalFields) {
-                                result = result.addFormDataPart(key, value)
-                            }
-                            result
-                        }
-                        .build()
+                while (data.size > maxSize) {
+                    qualityToTry -= 5
+                    data = ByteArrayOutputStream().use {
+                        rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
+                        it.toByteArray()
+                    }
+                }
+                Log.i(
+                    "HttpClient",
+                    "Sending $method request to $url with headers $headers and image at quality level $qualityToTry"
                 )
-                .headers(Headers.of(headers))
-                .build()
+                val request = Request.Builder()
+                    .url(url)
+                    .method(
+                        method,
+                        MultipartBody.Builder()
+                            .setType(MultipartBody.FORM)
+                            .addFormDataPart(
+                                fieldName,
+                                "image.jpg",
+                                RequestBody.create(MediaType.parse("image/jpeg"), data)
+                            )
+                            .let { it ->
+                                var result = it
+                                for ((key, value) in additionalFields) {
+                                    result = result.addFormDataPart(key, value)
+                                }
+                                result
+                            }
+                            .build()
+                    )
+                    .headers(Headers.of(headers))
+                    .build()
 
-            client.newCall(request).go(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    runResult {
-                        onResult.invoke(0, e.message ?: "")
-                    }
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    val raw = response.body()!!.string()
-                    println("Response ${response.code()}: $raw")
-                    runResult {
-
-                        val code = response.code()
-                        if (code / 100 == 2) {
-                            onResult.invoke(response.code(), null)
-                        } else {
-                            onResult.invoke(code, raw ?: "")
+                client.newCall(request).go(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        runResult {
+                            onResult.invoke(0, e.message ?: "")
                         }
                     }
-                }
-            })
-        }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        val raw = response.body()!!.string()
+                        println("Response ${response.code()}: $raw")
+                        runResult {
+
+                            val code = response.code()
+                            if (code / 100 == 2) {
+                                onResult.invoke(response.code(), null)
+                            } else {
+                                onResult.invoke(code, raw ?: "")
+                            }
+                        }
+                    }
+                })
+            }).forever()
     }
 
 
@@ -443,80 +439,80 @@ object HttpClient {
         additionalFields: Map<String, String> = mapOf(),
         crossinline onResult: @escaping() (code: Int, result: T?, error: String?) -> Unit
     ) {
-        loadImage(image) { rawImage ->
-            if (rawImage == null) {
+        image.load().subscribeBy(
+            onError = {
                 onResult(0, null, "Failed to read image.")
-                return@loadImage
-            }
-            var qualityToTry = 100
-            var data = ByteArrayOutputStream().use {
-                rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
-                it.toByteArray()
-            }
-            while (data.size > maxSize) {
-                qualityToTry -= 5
-                data = ByteArrayOutputStream().use {
+            },
+            onSuccess = { rawImage ->
+                var qualityToTry = 100
+                var data = ByteArrayOutputStream().use {
                     rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
                     it.toByteArray()
                 }
-            }
-            Log.i(
-                "HttpClient",
-                "Sending $method request to $url with headers $headers and image at quality level $qualityToTry"
-            )
-            val request = Request.Builder()
-                .url(url)
-                .method(
-                    method,
-                    MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart(
-                            fieldName,
-                            "image.jpg",
-                            RequestBody.create(MediaType.parse("image/jpeg"), data)
-                        )
-                        .let { it ->
-                            var result = it
-                            for ((key, value) in additionalFields) {
-                                result = result.addFormDataPart(key, value)
-                            }
-                            result
-                        }
-                        .build()
+                while (data.size > maxSize) {
+                    qualityToTry -= 5
+                    data = ByteArrayOutputStream().use {
+                        rawImage.compress(Bitmap.CompressFormat.JPEG, qualityToTry, it)
+                        it.toByteArray()
+                    }
+                }
+                Log.i(
+                    "HttpClient",
+                    "Sending $method request to $url with headers $headers and image at quality level $qualityToTry"
                 )
-                .headers(Headers.of(headers))
-                .build()
-
-            client.newCall(request).go(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    runResult {
-                        onResult.invoke(0, null, e.message ?: "")
-                    }
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    val raw = response.body()!!.string()
-                    println("Response ${response.code()}: $raw")
-                    runResult {
-                        val code = response.code()
-                        if (code / 100 == 2) {
-                            try {
-                                val read =
-                                    mapper.readValue<T>(
-                                        raw,
-                                        object : TypeReference<T>() {})
-                                onResult.invoke(code, read, null)
-                            } catch (e: Exception) {
-                                Log.e("HttpClient", "Failure to parse: ${e.message}")
-                                onResult.invoke(code, null, e.message)
+                val request = Request.Builder()
+                    .url(url)
+                    .method(
+                        method,
+                        MultipartBody.Builder()
+                            .setType(MultipartBody.FORM)
+                            .addFormDataPart(
+                                fieldName,
+                                "image.jpg",
+                                RequestBody.create(MediaType.parse("image/jpeg"), data)
+                            )
+                            .let { it ->
+                                var result = it
+                                for ((key, value) in additionalFields) {
+                                    result = result.addFormDataPart(key, value)
+                                }
+                                result
                             }
-                        } else {
-                            onResult.invoke(code, null, raw ?: "")
+                            .build()
+                    )
+                    .headers(Headers.of(headers))
+                    .build()
+
+                client.newCall(request).go(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        runResult {
+                            onResult.invoke(0, null, e.message ?: "")
                         }
                     }
-                }
-            })
-        }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        val raw = response.body()!!.string()
+                        println("Response ${response.code()}: $raw")
+                        runResult {
+                            val code = response.code()
+                            if (code / 100 == 2) {
+                                try {
+                                    val read =
+                                        mapper.readValue<T>(
+                                            raw,
+                                            object : TypeReference<T>() {})
+                                    onResult.invoke(code, read, null)
+                                } catch (e: Exception) {
+                                    Log.e("HttpClient", "Failure to parse: ${e.message}")
+                                    onResult.invoke(code, null, e.message)
+                                }
+                            } else {
+                                onResult.invoke(code, null, raw ?: "")
+                            }
+                        }
+                    }
+                })
+            }).forever()
     }
 }
 

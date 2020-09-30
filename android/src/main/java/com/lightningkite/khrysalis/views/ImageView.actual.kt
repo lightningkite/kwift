@@ -8,7 +8,7 @@ import android.util.Size
 import android.widget.ImageView
 import com.lightningkite.khrysalis.*
 import com.lightningkite.khrysalis.net.HttpClient
-import com.squareup.picasso.Picasso
+import com.bumptech.glide.Glide
 import java.io.IOException
 
 
@@ -21,24 +21,14 @@ import java.io.IOException
  */
 fun ImageView.loadImage(image: Image?) {
     post {
-        image?.let { image ->
+        if (image != null) {
             when (image) {
                 is ImageRaw -> this.setImageBitmap(BitmapFactory.decodeByteArray(image.raw, 0, image.raw.size))
-                is ImageReference -> this.setImageBitmap(
-                    MediaStore.Images.Media.getBitmap(
-                        HttpClient.appContext.contentResolver,
-                        image.uri
-                    )
-                )
+                is ImageReference -> Glide.with(this).load(image.uri).into(this)
                 is ImageBitmap -> this.setImageBitmap(image.bitmap)
-                is ImageRemoteUrl -> {
-                    if (image.url.isNotBlank() && this.width > 0 && this.height > 0) {
-                        Picasso.get().load(image.url).resize(this.width * 2, this.height * 2).centerInside().into(this)
-                    }
-                }
+                is ImageRemoteUrl -> Glide.with(this).load(image.url).into(this)
             }
-        }
-        if (image == null) {
+        } else {
             this.setImageDrawable(null)
         }
     }
@@ -60,7 +50,7 @@ fun ImageView.loadVideoThumbnail(video: Video?) {
 
                 val mMMR = MediaMetadataRetriever()
                 mMMR.setDataSource(context, video.uri)
-                if(this.width > 0 && this.height > 0) {
+                if (this.width > 0 && this.height > 0) {
                     this.setImageBitmap(
                         mMMR.getScaledFrameAtTime(
                             2000000,
@@ -69,7 +59,7 @@ fun ImageView.loadVideoThumbnail(video: Video?) {
                             this.height
                         )
                     )
-                }else{
+                } else {
                     this.setImageBitmap(mMMR.frameAtTime)
                 }
             } catch (e: Exception) {
