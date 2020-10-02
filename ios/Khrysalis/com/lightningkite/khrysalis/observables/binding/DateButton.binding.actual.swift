@@ -6,7 +6,7 @@ import Foundation
 public extension DateButton {
     func bind(_ observable: MutableObservableProperty<Date>) -> Void {
         self.date = observable.value
-        observable.subscribeBy({_ in}, {},  { ( value) in
+        observable.subscribeBy(onNext:{ ( value) in
             if self.date != value {
                 self.date = value
             }
@@ -27,7 +27,7 @@ public extension TimeButton {
     func bind(_ observable: MutableObservableProperty<Date>, _ minuteInterval: Int32 = 1) -> Void {
         self.minuteInterval = Int(minuteInterval)
         self.date = observable.value
-        observable.subscribeBy({_ in}, {},  { ( value) in
+        observable.subscribeBy(onNext: { ( value) in
             if self.date != value {
                 self.date = value
             }
@@ -46,7 +46,7 @@ public extension TimeButton {
 //--- DateButton.bindDateAlone(MutableObservableProperty<DateAlone>)
 public extension DateButton {
     func bindDateAlone(_ observable: MutableObservableProperty<DateAlone>) -> Void {
-        observable.subscribeBy({_ in}, {},  { ( value) in
+        observable.subscribeBy(onNext:{ ( value) in
             if self.date.dateAlone != value {
                 self.date = dateFrom(value, Date().timeAlone)
             }
@@ -67,7 +67,7 @@ public extension DateButton {
 public extension TimeButton {
     func bindTimeAlone(_ observable: MutableObservableProperty<TimeAlone>, _ minuteInterval: Int32 = 1) -> Void {
         self.minuteInterval = Int(minuteInterval)
-        observable.subscribeBy ({_ in}, {}, { ( value) in
+        observable.subscribeBy (onNext:{ ( value) in
             if self.date.timeAlone != value {
                 self.date = dateFrom(Date().dateAlone, value)
             }

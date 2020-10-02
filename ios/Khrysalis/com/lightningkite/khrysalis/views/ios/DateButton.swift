@@ -52,6 +52,11 @@ public class DateButton : UIButtonWithLayer {
     }
 
     open func commonInit(){
+        if #available(iOS 13.4, *) {
+            picker.preferredDatePickerStyle = .wheels
+        } else {
+            // Fallback on earlier versions
+        }
         picker.datePickerMode = .date
         picker.addAction(for: .valueChanged, id: "0", action: { [weak picker, weak self] in
             self?.date = picker?.date ?? Date()
