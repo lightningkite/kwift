@@ -1,8 +1,7 @@
 package com.lightningkite.khrysalis.swift
 
-import com.lightningkite.khrysalis.swift.replacements.Template
-import com.lightningkite.khrysalis.swift.replacements.TemplatePart
-import com.lightningkite.khrysalis.util.AnalysisExtensions
+import com.lightningkite.khrysalis.replacements.Template
+import com.lightningkite.khrysalis.replacements.TemplatePart
 import com.lightningkite.khrysalis.util.fqNameWithoutTypeArgs
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
@@ -17,26 +16,8 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
 import java.util.concurrent.atomic.AtomicInteger
-
-val uniqueNumber = AtomicInteger(0)
-
-data class VirtualGet(
-    val receiver: Any,
-    val property: PropertyDescriptor,
-    val receiverType: KotlinType?,
-    val expr: KtQualifiedExpression,
-    val safe: Boolean
-)
-
-data class VirtualSet(
-    val receiver: Any,
-    val property: PropertyDescriptor,
-    val receiverType: KotlinType?,
-    val expr: KtExpression,
-    val safe: Boolean,
-    val value: Any,
-    val dispatchReceiver: String?
-)
+import com.lightningkite.khrysalis.abstractions.*
+import com.lightningkite.khrysalis.analysis.*
 
 val PropertyDescriptor.hasSwiftBacking: Boolean
     get() {
@@ -49,11 +30,11 @@ val PropertyDescriptor.hasSwiftOverride: Boolean
     }
 
 
-fun AnalysisExtensions.capturesSelf(
-    it: PsiElement?,
+fun KtElement.capturesSelf(
     containingDeclaration: ClassDescriptor?,
     immediate: Boolean = true
 ): Boolean {
+    val it = this
     if (it == null) return false
     if (it is KtLambdaExpression) {
         return it.allChildren.any { capturesSelf(it, containingDeclaration, false) }

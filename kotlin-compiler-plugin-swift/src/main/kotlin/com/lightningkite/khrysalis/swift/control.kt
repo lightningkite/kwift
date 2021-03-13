@@ -1,5 +1,6 @@
 package com.lightningkite.khrysalis.swift
 
+import com.lightningkite.khrysalis.abstractions.IfCondition
 import com.lightningkite.khrysalis.util.forEachBetween
 import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.ValueDescriptor
@@ -10,8 +11,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getTextWithLocation
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.nullability
-
-data class IfCondition(val expression: KtExpression)
 
 fun SwiftTranslator.registerControl() {
 

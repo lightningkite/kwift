@@ -1,4 +1,4 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo

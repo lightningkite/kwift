@@ -1,5 +1,6 @@
 package com.lightningkite.khrysalis.swift
 
+import com.lightningkite.khrysalis.generic.KotlinTranspileCLP
 import com.lightningkite.khrysalis.kotlin.ExecuteFileTester
 import com.lightningkite.khrysalis.kotlin.Libraries
 import java.io.File
@@ -34,9 +35,9 @@ fun ExecuteFileTester.compileToSwift(file: File): File {
             this.pluginClasspaths = arrayOf("build/libs/kotlin-compiler-plugin-swift-0.1.0.jar")
             this.pluginOptions =
                 arrayOf(
-                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinSwiftCLP.KEY_DEPENDENCIES_NAME}=${Libraries.translationFilesButterfly()}",
-                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinSwiftCLP.KEY_OUTPUT_DIRECTORY_NAME}=${outFolder}",
-                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinSwiftCLP.KEY_PROJECT_NAME_NAME}=Yeet"
+                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinTranspileCLP.KEY_EQUIVALENTS_NAME}=${Libraries.translationFilesButterfly()}",
+                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinTranspileCLP.KEY_OUTPUT_DIRECTORY_NAME}=${outFolder}",
+                    "plugin:${KotlinSwiftCLP.PLUGIN_ID}:${KotlinTranspileCLP.KEY_PROJECT_NAME_NAME}=Yeet"
                 )
         }
     )

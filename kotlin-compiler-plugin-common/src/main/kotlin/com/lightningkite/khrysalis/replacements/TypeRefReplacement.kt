@@ -1,4 +1,4 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor

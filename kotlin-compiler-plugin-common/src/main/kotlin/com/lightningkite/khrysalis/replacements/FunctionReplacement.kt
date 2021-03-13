@@ -1,5 +1,6 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
+import com.lightningkite.khrysalis.analysis.actuallyCouldBeExpression
 import com.lightningkite.khrysalis.util.*
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -38,7 +39,6 @@ data class FunctionReplacement(
                 (typeArgumentRequirements?.size?.times(32) ?: 0)
 
     fun passes(
-        analysis: AnalysisExtensions,
         call: ResolvedCall<out CallableDescriptor>,
         descriptor: CallableDescriptor
     ): Boolean {
@@ -74,7 +74,7 @@ data class FunctionReplacement(
             ) return false
         }
         if (this.usedAsExpression != null) {
-            if (this.usedAsExpression != with(analysis) { (call.call.callElement as? KtExpression)?.actuallyCouldBeExpression }) {
+            if (this.usedAsExpression != (call.call.callElement as? KtExpression)?.actuallyCouldBeExpression ) {
                 return false
             }
         }

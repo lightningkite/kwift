@@ -1,7 +1,6 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.lightningkite.khrysalis.swift.replacements.xib.*
 import com.lightningkite.khrysalis.util.recursiveChildren
 import com.lightningkite.khrysalis.util.satisfies
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -19,9 +18,7 @@ data class TypeReplacement(
     var typeArgumentNames: List<String>? = null,
     var errorCondition: Template? = null,
     var constraintTemplate: Template? = null,
-    var constraintTemplates: List<Template>? = null,
-
-    var xib: XibTranslation? = null
+    var constraintTemplates: List<Template>? = null
 ) : ReplacementRule {
 
     override fun merge(other: ReplacementRule): Boolean {
@@ -34,7 +31,6 @@ data class TypeReplacement(
         this.errorCondition = other.errorCondition
         this.constraintTemplate = other.constraintTemplate
         this.constraintTemplates = other.constraintTemplates
-        this.xib = other.xib
         return true
     }
 

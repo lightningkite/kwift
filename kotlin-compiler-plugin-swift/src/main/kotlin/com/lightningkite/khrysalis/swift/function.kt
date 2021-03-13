@@ -1,18 +1,16 @@
 package com.lightningkite.khrysalis.swift
 
-import com.lightningkite.khrysalis.util.forEachBetween
-import com.lightningkite.khrysalis.util.walkTopDown
+import com.lightningkite.khrysalis.abstractions.*
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import com.lightningkite.khrysalis.generic.PartialTranslatorByType
-import com.lightningkite.khrysalis.swift.replacements.Template
-import com.lightningkite.khrysalis.swift.replacements.TemplatePart
-import com.lightningkite.khrysalis.util.fqNameWithoutTypeArgs
+import com.lightningkite.khrysalis.replacements.Template
+import com.lightningkite.khrysalis.replacements.TemplatePart
+import com.lightningkite.khrysalis.util.*
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.synthetic.hasJavaOriginInHierarchy
@@ -49,15 +47,6 @@ val FunctionDescriptor.swiftName: String?
     } else {
         this.name.identifier
     }
-
-data class VirtualFunction(
-    val name: Any,
-    val resolvedFunction: FunctionDescriptor? = null,
-    val typeParameters: List<Any>,
-    val valueParameters: List<Any>,
-    val returnType: Any,
-    val body: Any?
-)
 
 
 fun SwiftTranslator.registerFunction() {
@@ -495,7 +484,8 @@ fun SwiftTranslator.registerFunction() {
                     requiresWrapping = typedRule.actuallyCouldBeExpression,
                     template = if(mode == AccessMode.QUEST_DOT)
                         Template(parts = rule.template.parts.toMutableList().apply {
-                            this[1] = (this[1] as TemplatePart.Text).let { it.copy("?" + (if(hasNewlineBeforeAccess(typedRule)) "\n" else "") + it.string) }
+                            this[1] =
+                                (this[1] as TemplatePart.Text).let { it.copy("?" + (if (hasNewlineBeforeAccess(typedRule)) "\n" else "") + it.string) }
                         })
                     else rule.template,
                     receiver = if(hasNewlineBeforeAccess(typedRule) && mode == AccessMode.PLAIN_DOT) listOf(rec, "\n") else rec,
@@ -596,13 +586,4 @@ fun SwiftTranslator.registerFunction() {
             -"()"
         }
     }
-}
-
-data class ArgumentsList(
-    val on: FunctionDescriptor,
-    val resolvedCall: ResolvedCall<out CallableDescriptor>,
-    val prependArguments: List<Any> = listOf(),
-    val replacements: Map<ValueParameterDescriptor, Any?> = mapOf()
-) {
-
 }

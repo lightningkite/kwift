@@ -69,13 +69,13 @@ repositories {
     google()
 }
 
-sourceSets.main {
-    java.srcDirs(
-        "../kotlin-compiler-plugin-swift/src/main/kotlin",
-        "../kotlin-compiler-plugin-typescript/src/main/kotlin",
-        "../kotlin-compiler-plugin-common/src/main/kotlin"
-    )
-}
+//sourceSets.main {
+//    java.srcDirs(
+//        "../kotlin-compiler-plugin-swift/src/main/kotlin",
+//        "../kotlin-compiler-plugin-typescript/src/main/kotlin",
+//        "../kotlin-compiler-plugin-common/src/main/kotlin"
+//    )
+//}
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     kotlinOptions {

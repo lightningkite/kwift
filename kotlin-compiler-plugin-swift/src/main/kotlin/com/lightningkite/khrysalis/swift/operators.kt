@@ -12,27 +12,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getTextWithLocation
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedValueArgument
+import com.lightningkite.khrysalis.util.*
+import com.lightningkite.khrysalis.abstractions.*
 
 //class TestThing(){
 //    operator fun dec
 //}
-
-data class ValueOperator(
-    val left: Any,
-    val right: Any,
-    val functionDescriptor: FunctionDescriptor,
-    val dispatchReceiver: Any? = null,
-    val operationToken: IElementType,
-    val resolvedCall: ResolvedCall<out CallableDescriptor>? = null
-)
-
-data class VirtualArrayGet(
-    val arrayExpression: Any,
-    val indexExpressions: List<Any>,
-    val functionDescriptor: FunctionDescriptor,
-    val dispatchReceiver: Any? = null,
-    val resolvedCall: ResolvedCall<out CallableDescriptor>? = null
-)
 
 data class OpInfo(
     val name: String,

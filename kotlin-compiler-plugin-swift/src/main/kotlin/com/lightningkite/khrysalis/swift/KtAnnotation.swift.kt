@@ -3,7 +3,5 @@ package com.lightningkite.khrysalis.swift
 import org.jetbrains.kotlin.psi.KtAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-fun SwiftTranslator.registerAnnotation() {
-    handle<KtAnnotation> { /*skip*/ }
-    handle<KtAnnotationEntry> { /*skip*/ }
-}
+fun KtAnnotation.swift(out: SwiftFileEmitter){ /*skip*/ }
+fun KtAnnotationEntry.swift(out: SwiftFileEmitter){ /*skip*/ }

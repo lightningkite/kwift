@@ -1,7 +1,8 @@
 package com.lightningkite.khrysalis.swift
 
+import com.lightningkite.khrysalis.abstractions.*
 import com.lightningkite.khrysalis.generic.PartialTranslatorByType
-import com.lightningkite.khrysalis.swift.replacements.TemplatePart
+import com.lightningkite.khrysalis.swift.replacements.SwiftImport
 import com.lightningkite.khrysalis.util.AnalysisExtensions
 import com.lightningkite.khrysalis.util.forEachBetween
 import com.lightningkite.khrysalis.util.fqNameWithoutTypeArgs
@@ -61,31 +62,31 @@ fun SwiftTranslator.registerClass() {
             )
             .let {
                 if (on is KtClass && on.isData()) {
-                    out.addImport(TemplatePart.Import("LKButterfly"))
+                    out.addImport(SwiftImport("LKButterfly"))
                     it + listOf("KDataClass")
                 } else it
             }
             .let {
                 if (on is KtClass && on.isEnum()) {
-                    out.addImport(TemplatePart.Import("LKButterfly"))
+                    out.addImport(SwiftImport("LKButterfly"))
                     it + listOf("KEnum")
                 } else it
             }
             .let {
                 if (on.body?.functions?.find { it.name == "equals" && it.valueParameters.size == 1 } != null) {
-                    out.addImport(TemplatePart.Import("LKButterfly"))
+                    out.addImport(SwiftImport("LKButterfly"))
                     it + listOf("KEquatable")
                 } else it
             }
             .let {
                 if (on.body?.functions?.find { it.name == "hashCode" && it.valueParameters.size == 0 } != null) {
-                    out.addImport(TemplatePart.Import("LKButterfly"))
+                    out.addImport(SwiftImport("LKButterfly"))
                     it + listOf("KHashable")
                 } else it
             }
             .let {
                 if (on.body?.functions?.find { it.name == "toString" && it.valueParameters.size == 0 } != null) {
-                    out.addImport(TemplatePart.Import("LKButterfly"))
+                    out.addImport(SwiftImport("LKButterfly"))
                     it + listOf("KStringable")
                 } else it
             }

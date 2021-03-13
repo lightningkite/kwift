@@ -46,6 +46,7 @@ fun convertToTypescript(
         },
         services = Services.EMPTY,
         arguments = K2JVMCompilerArguments().apply {
+            this.useIR = true
             this.freeArgs = files.filter { it.extension in setOf("kt", "java") }.map { it.absolutePath }.toList()
             this.classpathAsList = libraries.toList()
             this.pluginClasspaths = pluginCache.resolve("typescript.kjar")

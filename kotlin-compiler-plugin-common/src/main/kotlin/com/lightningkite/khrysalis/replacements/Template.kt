@@ -1,6 +1,16 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
-data class Template(val parts: List<TemplatePart>) : Iterable<TemplatePart> {
+data class Template(
+    val parts: List<TemplatePart>,
+    val imports: List<Import> = listOf()
+) : Iterable<TemplatePart> {
+
+    private fun getParts(part: TemplatePart): Sequence<TemplatePart> = sequenceOf(part) + when(part){
+        is TemplatePart.LambdaParameterContents -> part.paramMap.asSequence().flatMap { it.allParts }
+        else -> emptySequence()
+    }
+    val allParts: Sequence<TemplatePart> get() = parts.asSequence().flatMap { getParts(it) }
+
     override fun iterator(): Iterator<TemplatePart> = parts.iterator()
 
     override fun toString(): String {
@@ -75,8 +85,8 @@ data class Template(val parts: List<TemplatePart>) : Iterable<TemplatePart> {
             }
             return parts
         }
-        fun fromString(text: String, imports: List<TemplatePart.Import> = listOf(), subMaps: Map<Int, List<Template>> = mapOf()): Template {
-            return Template(partsFromString(text, subMaps) + imports)
+        fun fromString(text: String, imports: List<Import> = listOf(), subMaps: Map<Int, List<Template>> = mapOf()): Template {
+            return Template(partsFromString(text, subMaps), imports)
         }
     }
 }

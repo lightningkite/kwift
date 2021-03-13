@@ -2,7 +2,7 @@ package com.lightningkite.khrysalis.swift
 
 import com.lightningkite.khrysalis.generic.PartialTranslatorByType
 import com.lightningkite.khrysalis.generic.TranslatorInterface
-import com.lightningkite.khrysalis.swift.replacements.Replacements
+import com.lightningkite.khrysalis.replacements.Replacements
 import com.lightningkite.khrysalis.util.AnalysisExtensions
 import com.lightningkite.khrysalis.util.fqNameWithTypeArgs
 import com.lightningkite.khrysalis.util.fqNameWithoutTypeArgs
@@ -29,7 +29,7 @@ class SwiftTranslator(
     override val bindingContext: BindingContext,
     val commonPath: String,
     val collector: MessageCollector? = null,
-    val replacements: Replacements = Replacements()
+    val replacements: Replacements
 ) : PartialTranslatorByType<SwiftFileEmitter, Unit, Any>(), TranslatorInterface<SwiftFileEmitter, Unit>,
     AnalysisExtensions {
 
@@ -144,69 +144,8 @@ class SwiftTranslator(
         registerOperators()
         registerReceiver()
         registerSpecialLet()
-        registerQualified()
         registerException()
     }
-
-
-    fun KtExpression.isSafeLetDirect(): Boolean {
-        if (this !is KtSafeQualifiedExpression) return false
-        val callExpression = this.selectorExpression as? KtCallExpression ?: return false
-        if (callExpression.lambdaArguments.isEmpty()) return false
-        if ((callExpression.calleeExpression as? KtReferenceExpression)?.resolvedReferenceTarget?.fqNameSafe?.asString() != "kotlin.let") return false
-        return true
-    }
-
-    fun KtExpression.isRunDirect(): Boolean {
-        if (this !is KtCallExpression) return false
-        if (this.lambdaArguments.isEmpty()) return false
-        if ((this.calleeExpression as? KtReferenceExpression)?.resolvedReferenceTarget?.fqNameSafe?.asString() != "kotlin.run") return false
-        return true
-    }
-
-    fun KtBinaryExpression.isSafeLetChain(): Boolean {
-        if (this.operationToken != KtTokens.ELVIS) return false
-        if (this.left?.isSafeLetDirect() == true) return true
-        return (this.left as? KtBinaryExpression)?.isSafeLetChain() == true
-    }
-
-    fun KtBinaryExpression.safeLetChainRoot(): KtBinaryExpression {
-        (this.parent as? KtBinaryExpression)?.let { p ->
-            if (p.left == this) {
-                if (p.operationToken == KtTokens.ELVIS) {
-                    return p.safeLetChainRoot()
-                }
-            }
-        }
-        return this
-    }
-
-    inline fun <reified T> PsiElement.parentIfType(): T? = parent as? T
-    override fun determineMaybeExpressionLambda(it: KtFunctionLiteral): Boolean {
-        if (!super.determineMaybeExpressionLambda(it)) {
-            return false
-        }
-        if (it
-                .parentIfType<KtLambdaExpression>()
-                ?.parentIfType<KtLambdaArgument>()
-                ?.parentIfType<KtCallExpression>()
-                ?.let {
-                    if ((it.parent as? KtExpression)?.let {
-                            it.isSafeLetDirect() && !determineMaybeExpression(it)
-                        } == true) {
-                        return false
-                    }
-                    it.parentIfType<KtBinaryExpression>()
-                        ?: it.parentIfType<KtQualifiedExpression>()
-                            ?.parentIfType<KtBinaryExpression>()
-                }
-                ?.let { it.isSafeLetChain() && !determineMaybeExpression(it.safeLetChainRoot()) } == true
-        ) {
-            return false
-        }
-        return true
-    }
-
 
     fun KotlinType.requiresMutable(): Boolean {
         return replacements.requiresMutable(this)

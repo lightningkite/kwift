@@ -1,4 +1,4 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
 import com.lightningkite.khrysalis.util.fqNameWithoutTypeArgs
 import com.lightningkite.khrysalis.util.simpleFqName

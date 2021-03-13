@@ -4,6 +4,7 @@ import com.lightningkite.khrysalis.generic.PartialTranslatorByType
 import com.lightningkite.khrysalis.generic.TranslatorInterface
 import com.lightningkite.khrysalis.typescript.replacements.Replacements
 import com.lightningkite.khrysalis.util.AnalysisExtensions
+import com.lightningkite.khrysalis.util.ReceiverMapping
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
@@ -27,40 +28,18 @@ class TypescriptTranslator(
     val commonPath: String,
     val collector: MessageCollector? = null,
     val replacements: Replacements = Replacements()
-) : PartialTranslatorByType<TypescriptFileEmitter, Unit, Any>(), TranslatorInterface<TypescriptFileEmitter, Unit>, AnalysisExtensions {
+) : PartialTranslatorByType<TypescriptFileEmitter, Unit, Any>(),
+    TranslatorInterface<TypescriptFileEmitter, Unit>,
+    AnalysisExtensions,
+    ReceiverMapping
+{
 
     val declarations: DeclarationManifest = DeclarationManifest()
 
     var stubMode: Boolean = false
 
-    data class ReceiverAssignment(val declaration: DeclarationDescriptor, val tsName: String)
-
-    val identifierMappings = HashMap<DeclarationDescriptor, String>()
-    inline fun withName(ktName: DeclarationDescriptor, tsName: String, action: (String)->Unit){
-        identifierMappings[ktName] = tsName
-        action(tsName)
-        identifierMappings.remove(ktName)
-    }
-
-    val _receiverStack = ArrayList<ReceiverAssignment>()
-    val receiverStack: List<ReceiverAssignment> get() = _receiverStack
-    inline fun withReceiverScope(
-        descriptor: DeclarationDescriptor,
-        suggestedName: String = "this_",
-        action: (newIdentifier: String) -> Unit
-    ) {
-        var currentNumber = 0
-        var tsName = suggestedName
-        while (_receiverStack.any { it.tsName == tsName }) {
-            currentNumber++
-            tsName = suggestedName + currentNumber
-        }
-
-        val newItem = ReceiverAssignment(descriptor, tsName)
-        _receiverStack.add(newItem)
-        action(tsName)
-        _receiverStack.remove(newItem)
-    }
+    override val identifierMappings = HashMap<DeclarationDescriptor, String>()
+    override val _receiverStack = ArrayList<ReceiverMapping.ReceiverAssignment>()
     fun KtExpression.getTsReceiver(): Any? {
         val dr = this.resolvedCall?.dispatchReceiver ?: this.resolvedCall?.extensionReceiver ?: run {
             return null
@@ -156,76 +135,6 @@ class TypescriptTranslator(
         handle<LeafPsiElement>(condition = { typedRule.text in terminalMap.keys }, priority = 1) {
             out.append(terminalMap[typedRule.text])
         }
-    }
-
-
-    fun KtExpression.isSafeLetDirect(): Boolean {
-        if (this !is KtSafeQualifiedExpression) return false
-        val callExpression = this.selectorExpression as? KtCallExpression ?: return false
-        if (callExpression.lambdaArguments.isEmpty()) return false
-        if ((callExpression.calleeExpression as? KtReferenceExpression)?.resolvedReferenceTarget?.fqNameSafe?.asString() != "kotlin.let") return false
-        return true
-    }
-
-    fun KtExpression.isRunDirect(): Boolean {
-        if (this !is KtCallExpression) return false
-        if (this.lambdaArguments.isEmpty()) return false
-        if ((this.calleeExpression as? KtReferenceExpression)?.resolvedReferenceTarget?.fqNameSafe?.asString() != "kotlin.run") return false
-        return true
-    }
-
-    fun KtBinaryExpression.isSafeLetChain(): Boolean {
-        if (this.operationToken != KtTokens.ELVIS) return false
-        if (this.left?.isSafeLetDirect() == true) return true
-        return (this.left as? KtBinaryExpression)?.isSafeLetChain() == true
-    }
-
-    fun KtBinaryExpression.safeLetChainRoot(): KtBinaryExpression {
-        (this.parent as? KtBinaryExpression)?.let { p ->
-            if (p.left == this) {
-                if (p.operationToken == KtTokens.ELVIS) {
-                    return p.safeLetChainRoot()
-                }
-            }
-        }
-        return this
-    }
-
-    fun KtExpression.needsSemi(): Boolean = this !is KtDeclaration
-            && this !is KtLoopExpression
-            && this !is KtBlockExpression
-            && this !is KtIfExpression
-            && this !is KtTryExpression
-            && this !is KtWhenExpression
-            && !this.isSafeLetDirect()
-            && ((this as? KtBinaryExpression)?.isSafeLetChain() != true)
-
-    inline fun <reified T> PsiElement.parentIfType(): T? = parent as? T
-    override fun determineMaybeExpressionLambda(it: KtFunctionLiteral): Boolean {
-        if(!super.determineMaybeExpressionLambda(it)) {
-            return false
-        }
-        if(it
-                .parentIfType<KtLambdaExpression>()
-                ?.let {
-                    it.parentIfType<KtLambdaArgument>() ?: it.parentIfType<KtAnnotatedExpression>()?.parentIfType<KtLambdaArgument>()
-                }
-                ?.parentIfType<KtCallExpression>()
-                ?.let {
-                    if((it.parent as? KtExpression)?.let {
-                            it.isSafeLetDirect() && !determineMaybeExpression(it)
-                        } == true){
-                        return false
-                    }
-                    it.parentIfType<KtBinaryExpression>()
-                        ?: it.parentIfType<KtQualifiedExpression>()
-                            ?.parentIfType<KtBinaryExpression>()
-                }
-                ?.let { it.isSafeLetChain() && !determineMaybeExpression(it.safeLetChainRoot()) } == true
-        ){
-            return false
-        }
-        return true
     }
 }
 

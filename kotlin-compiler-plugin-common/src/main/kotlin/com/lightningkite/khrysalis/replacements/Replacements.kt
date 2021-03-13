@@ -1,4 +1,4 @@
-package com.lightningkite.khrysalis.swift.replacements
+package com.lightningkite.khrysalis.replacements
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -17,7 +17,7 @@ import java.util.*
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
-class Replacements() {
+class Replacements(var mapper: ObjectMapper) {
     val functions: HashMap<String, TreeSet<FunctionReplacement>> = HashMap()
     val gets: HashMap<String, TreeSet<GetReplacement>> = HashMap()
     val sets: HashMap<String, TreeSet<SetReplacement>> = HashMap()
@@ -27,7 +27,6 @@ class Replacements() {
 
 
     fun getCall(
-        analysis: AnalysisExtensions,
         call: ResolvedCall<out CallableDescriptor>,
         descriptor: CallableDescriptor = call.candidateDescriptor,
         alreadyChecked: HashSet<CallableDescriptor> = HashSet()
@@ -39,14 +38,12 @@ class Replacements() {
             }
             .find {
                 it.passes(
-                    analysis = analysis,
                     call = call,
                     descriptor = descriptor
                 )
             } ?: (descriptor as? CallableMemberDescriptor)?.allOverridden()
             ?.map {
                 getCall(
-                    analysis = analysis,
                     call = call,
                     descriptor = it,
                     alreadyChecked = alreadyChecked
@@ -168,13 +165,6 @@ class Replacements() {
 
     fun requiresMutable(type: KotlinType): Boolean = (sequenceOf(type) + type.supertypes().asSequence())
         .any { t -> types[t.fqNameWithoutTypeArgs]?.find { it.passes(t) }?.requiresMutable == true }
-
-    companion object {
-        val mapper: ObjectMapper = ObjectMapper(YAMLFactory())
-            .registerModule(JacksonReplacementsModule())
-            .registerModule(KotlinModule())
-//            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-    }
 
     operator fun plusAssign(item: ReplacementRule) {
         when (item) {
