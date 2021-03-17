@@ -207,6 +207,7 @@ abstract class KotlinTranspileExtension(
                 collector.report(CompilerMessageSeverity.LOGGING, "Translating ${file.virtualFilePath}.")
                 val output = transpile(bindingTrace.bindingContext, file)
                 if (existing != output)
+                    outputFile.parentFile.mkdirs()
                     outputFile.writeText(output.toString())
             } catch(e: Exception){
                 collector.report(CompilerMessageSeverity.ERROR, "Got error: ${e.stackTraceToString()}.")

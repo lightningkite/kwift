@@ -1,6 +1,8 @@
 package com.lightningkite.khrysalis.util
 
+import com.lightningkite.khrysalis.generic.FileEmitter
 import org.junit.Test
+import java.io.File
 
 class SmartTabWriterTest {
     @Test
@@ -11,5 +13,9 @@ class SmartTabWriterTest {
                 append('}')
             }
         })
+    }
+
+    @Test fun overwriteTest(){
+        println(FileEmitter.canBeOverwritten(File("/home/joseph/IdeaProjects/tresit-khrysalis/ios/DIRS/src/vg/PinAuth.swift")))
     }
 }

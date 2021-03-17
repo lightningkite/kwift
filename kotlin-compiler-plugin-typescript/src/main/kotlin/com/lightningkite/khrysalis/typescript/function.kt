@@ -595,6 +595,7 @@ fun TypescriptTranslator.registerFunction() {
 
     handle<KtCallExpression>(
         condition = {
+            typedRule.resolvedCall?.candidateDescriptor?.fqNameSafe?.let { println("Call is $it at ${typedRule.getTextWithLocation()}") }
             replacements.getCall(typedRule.resolvedCall ?: return@handle false) != null
         },
         priority = 10_001,

@@ -382,7 +382,7 @@ fun TypescriptTranslator.registerClass() {
                 .any { it.typeReference?.resolvedType?.fqNameWithoutTypeArgs == "com.lightningkite.butterfly.Codable" }
         ) {
             //Generate codable constructor
-            out.addImport("butterfly-web/dist/net/jsonParsing", "parse", "parseJsonTyped")
+            out.addImport("dist/net/jsonParsing", "parse", "parseJsonTyped")
 
             if(!typedRule.isEnum()){
                 -"public static fromJson"
@@ -454,7 +454,7 @@ fun TypescriptTranslator.registerClass() {
                 -"public hashCode(): number {\nlet hash = 17;\n"
                 typedRule.primaryConstructor?.valueParameters?.filter { it.hasValOrVar() }?.forEach { param ->
                     -"hash = 31 * hash + "
-                    out.addImport("butterfly-web/dist/Kotlin", "hashAnything")
+                    out.addImport("dist/Kotlin", "hashAnything")
                     -"hashAnything(this."
                     -param.nameIdentifier
                     -")"
@@ -470,7 +470,7 @@ fun TypescriptTranslator.registerClass() {
                 -typedRule.nameIdentifier
                 typedRule.primaryConstructor?.valueParameters?.filter { it.hasValOrVar() }?.forEach { param ->
                     -" && "
-                    out.addImport("butterfly-web/dist/Kotlin", "safeEq")
+                    out.addImport("dist/Kotlin", "safeEq")
                     -"safeEq(this."
                     -param.nameIdentifier
                     -", "

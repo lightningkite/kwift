@@ -6,6 +6,13 @@ import java.io.File
 
 fun renderImports(projectName: String?, relPath: String, imports: Collection<TypescriptImport>, writer: Appendable){
     imports.distinctBy { it.asName ?: it.identifier }.groupBy { it.path }.forEach { (path, parts) ->
+        if(path.contains("node_modules")) {
+            //Use node modules import
+
+        } else {
+            //Use local import
+            val relative = File(path)
+        }
         val usePath = (projectName?.let { p ->
             val prefix = "$p/dist/"
             if (path.startsWith(prefix, true)) {

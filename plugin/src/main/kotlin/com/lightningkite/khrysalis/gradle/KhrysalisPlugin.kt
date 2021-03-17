@@ -385,6 +385,43 @@ class KhrysalisPlugin : Plugin<Project> {
                 )
             }
         }
+        project.tasks.create("khrysalisConvertTestKotlinToTypescript") { task ->
+            task.dependsOn("khrysalisUpdateWebVersion")
+            task.group = "web"
+            var compileTask: KotlinCompile? = null
+            project.afterEvaluate {
+                compileTask = project.tasks
+                    .asSequence()
+                    .filter { it.name.startsWith("compile") && it.name.contains("UnitTestKotlin") }
+                    .mapNotNull { it as? KotlinCompile }
+                    .minBy { it.name.length }
+                compileTask?.let {
+                    task.dependsOn(it)
+                }
+            }
+            task.doFirst {
+                val originalTask = compileTask
+                    ?: project.tasks
+                        .asSequence()
+                        .filter { it.name.startsWith("compile") && it.name.contains("UnitTestKotlin") }
+                        .mapNotNull { it as? KotlinCompile }
+                        .minBy { it.name.length }
+                    ?: throw IllegalStateException("Could not find compile*UnitTestKotlin tasks - what's up with your project?")
+                val libraries = originalTask.classpath.asSequence()
+                val files = originalTask.source.toList().asSequence()
+                println("All files: ${files.joinToString("\n")}")
+                println("All libraries: ${libraries.joinToString("\n")}")
+                convertToTypescript(
+                    projectName = projectName(),
+                    libraries = libraries + project.buildDir.resolve("tmp/kotlin-classes/debug") + project.buildDir.resolve("intermediates/javac/debug/classes"),
+                    files = files,
+                    pluginCache = project.buildDir.resolve("khrysalis-kcp"),
+                    buildCache = project.buildDir.resolve("testBuild"),
+                    dependencies = sequenceOf(webBase()),
+                    output = webBase().resolve("test")
+                )
+            }
+        }
         project.tasks.create("khrysalisWeb") { task ->
             task.group = "web"
             task.dependsOn("khrysalisConvertLayoutsToHtmlSass")

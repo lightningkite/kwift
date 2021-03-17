@@ -147,7 +147,7 @@ tasks {
         from(project.projectDir.resolve("src/include"))
     }
     val javadocJar by creating(Jar::class) {
-        dependsOn("dokkaJavadoc")
+//        dependsOn("dokkaJavadoc")
         archiveClassifier.set("javadoc")
         from(project.file("build/dokka/javadoc"))
     }
